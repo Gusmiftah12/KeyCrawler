@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-keycrawler:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Checkout repository
@@ -28,7 +28,7 @@ jobs:
         uv pip install .
 
     - name: Setup .env file
-      run: echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" > .env
+      run: echo "GITHUB_TOKEN=${{ secrets.MY_GH_TOKEN }}" > .env
 
     - name: Create keys dir and cache.txt
       run: mkdir -p keys && touch cache.txt
@@ -41,7 +41,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload keys artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: keys-xml
         path: keys/
