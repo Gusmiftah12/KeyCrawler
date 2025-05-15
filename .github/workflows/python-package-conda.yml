@@ -2,46 +2,46 @@ name: Run KeyCrawler
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * *'  # Menjalankan setiap hari pada pukul 00:00 UTC
+  push:
+    branches: [main]
 
 jobs:
-  keycrawler:
+  run-keycrawler:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up Python with uv
-      uses: actions/setup-python@v5
+    - name: Setup Python 3.11
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: "3.11"
 
     - name: Install uv
-      run: |
-        curl -Ls https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      run: pip install uv
 
-    - name: Set up virtual environment and install dependencies
+    - name: Create venv and install dependencies
       run: |
         uv venv
+        source .venv/bin/activate
         uv pip install .
 
-    - name: Create required directories and files
+    - name: Setup .env file
+      run: echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" > .env
+
+    - name: Create keys dir and cache.txt
+      run: mkdir -p keys && touch cache.txt
+
+    - name: Run keyboxer.py
       run: |
-        mkdir -p keys
-        touch cache.txt
+        source .venv/bin/activate
+        uv run python3 ./keyboxer.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up .env file
-      run: |
-        echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" > .env
-
-    - name: Run KeyCrawler
-      run: uv run python3 ./keyboxer.py
-
-    - name: Upload keybox XMLs as artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload keys artifact
+      uses: actions/upload-artifact@v3
       with:
-        name: keybox-xmls
-        path: keys/*.xml
+        name: keys-xml
+        path: keys/
